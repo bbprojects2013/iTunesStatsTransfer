@@ -1,4 +1,4 @@
-
+#coding: latin-1
 
 import sys
 
@@ -8,11 +8,64 @@ import xml.etree.ElementTree as ET
 #This Software is published under the GPL3 License. 
 #Copyright 2013 Birk Bremer
  
- 
+class MusicDBclass(dict):
+    def __init__(self):
+        dict.__init__(self)
+        
+    def __normalize(self, string):
+        '''
+        Removes special characters, spaces and decapitalizes everything
+        @param string: string to work on
+        '''
+        string = string.replace("Š","ae").replace("š","oe").replace("Ÿ","ue").replace("§","ss").replace("Ÿ","ue").replace("_","").replace(" ","_").replace("-","").replace("/","").replace("\\","").lower()
+        return string
+        
+    def __CalcHash(self, sArtist, sSongName):
+        '''
+        Creates the pseudo Hash
+        @param sArtist: Artist as a string
+        @param sSongName: Song Name as a string
+        '''
+        
+        sArtist_normalized = self.__normalize(sArtist)
+        sSongName_normalized = self.__normalize(sSongName)
+        
+        return "%s%s"%(sArtist_normalized,sSongName_normalized)
+    
+    def add(self, sArtist, sSongName, iCount, iRating):
+        '''
+        Create a new element in the DB class
+        @param sArtist: Artist as a string
+        @param sSongName: Song Name as a string
+        @param iCount: count as a integer
+        @param iRating: Rating as a integer (Itunes only 0 - 100)
+        '''
+    
+        #nothing to do        
+        if (iCount == None) and (iRating == None):
+            return
+        
+        sHash = self.__CalcHash(sArtist, sSongName)
 
+        if not self.has_key(sHash):
+            self[sHash] = { "iCount": 0,
+                           "iRating": 0}
+        
+        if iCount != None:
+            self[sHash]["iCount"] = self[sHash]["iCount"] + iCount
+        
+        #take always the best rating
+        if iRating != None:
+            if self[sHash]["iRating"] < iRating:
+                self[sHash]["iRating"] = iRating
+            
+        
+        
+MusicDB = MusicDBclass()
 
 
 def ParseTunesXML(sLibraryFile):
+    global MusicDB
     #this function does the actual XML Parsing and creates the LibraryObjects
     print "Parsing Library File %s"%(sLibraryFile)
     #fh_LibraryFile = open(sLibraryFile,'r')
@@ -39,6 +92,7 @@ def ParseTunesXML(sLibraryFile):
             break
     
     for track in tracks:
+        #parse all the tracks element and transfer the information to the  summary
         sArtist= ""
         sSongName= ""
         iCount = None
@@ -62,27 +116,10 @@ def ParseTunesXML(sLibraryFile):
                 #print "found %s"%track[idx+1].text
                 iCount = int(track[idx+1].text)
         print "Song: %s by %s was played %s and rated %s"%(sSongName, sArtist, iCount, iRating)
+        MusicDB.add(sArtist, sSongName, iCount, iRating)
+    print MusicDB
         
-    #print tracks
-    
-    #print tracks.text, tracks.tag, tracks.attrib, "\n"
-        #print child.text, child.tag, child.attrib, "\n"
-        
-    #print root.find("key").text(9)
-    #for elem in root[0][0]:
-    #    print elem
-    #print root.attrib
-   
-    
-    #dom = parseString(xml_data)
-    #tracks = dom.getElementsByTagName("key")
-    #for elem in tracks:
-    #    if elem.toxml() == "<key>Tracks</key>" :
-    #        tracks = elem
-    #        break
-   # 
-    #print tracks
-    #print tracks.childNodes    
+
 
 
 
@@ -93,7 +130,7 @@ def ParseTunesXML(sLibraryFile):
 def main():
     #just the main function
     if len(sys.argv) == 1: 
-        sSourceFiles = [r"./sample/Mediathek.xml"]
+        sSourceFiles = [r"./sample/Mediathek.xml", r"./sample/Mediathek_dst.xml"]
         sDestinFile = r"./sample/Mediathek_dst.xml"
         
         print "Testmode: Using as Input: %s and output: %s"%(sSourceFiles, sDestinFile)
