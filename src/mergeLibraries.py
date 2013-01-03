@@ -178,11 +178,34 @@ def UpdateTunesDB(sLibraryFile):
             iCount, iRating = MusicDB.GetValue(sArtist, sSongName)
             print "Updating: %s / %s with Count: %s, Raing: %s"%(sArtist, sSongName, iCount, iRating)
             
+            if iCount > 0:
+                key_count = ET.SubElement(track, "key")
+                key_count.text = "Play Count"
+                num_count = ET.SubElement(track, "integer")
+                num_count.text = "%s"%(iCount)
+                
+            if iRating > 0:
+                key_rating = ET.SubElement(track, "key")
+                key_rating.text = "Rating"
+                num_rating = ET.SubElement(track, "integer")
+                num_rating.text = "%s"%(iRating)
+                
+                
+            
+         
+            
+            
                 
 
-                
-                
-    tree.write(r"./sample/testfile.xml")
+    out = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    out += '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
+    out += ET.tostring(root)
+    fh = open(r"./sample/testfile.xml","w")
+    fh.write(out)
+    fh.close()
+
+    #print ET.tostring(root)
+    #tree.write(r"./sample/testfile.xml")
                 
 
 
